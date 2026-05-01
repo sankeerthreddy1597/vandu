@@ -1,0 +1,19 @@
+{
+  "name": "@vandu/types",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "zod": "^3.24.1"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
+  }
+}

@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vandu — Recipe App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script type="text/babel" src="ios-frame.jsx"></script>
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #1a1a1a; font-family: 'DM Sans', sans-serif; }
+    .serif { font-family: 'DM Serif Display', serif; }
+    .serif-italic { font-family: 'DM Serif Display', serif; font-style: italic; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+// ─── PALETTE THEMES ──────────────────────────────────────────────────────────
+const THEMES = {
+  forest: {
+    name: "Forest",
+    dark:     "oklch(22% 0.055 160)",
+    darkMid:  "oklch(30% 0.06 158)",
+    accent:   "oklch(50% 0.13 155)",
+    accentLight: "oklch(88% 0.06 155)",
+    cta:      "oklch(44% 0.14 152)",
+    ctaText:  "#fff",
+    cream:    "oklch(97.5% 0.012 80)",
+    cardBg:   "oklch(95% 0.016 80)",
+    cardDark: "oklch(30% 0.055 158)",
+    tag:      "oklch(88% 0.06 155)",
+    tagText:  "oklch(35% 0.1 155)",
+    activeNav:"oklch(44% 0.14 152)",
+    pill:     "oklch(44% 0.14 152)",
+  },
+  slate: {
+    name: "Slate Blue",
+    dark:     "oklch(22% 0.05 240)",
+    darkMid:  "oklch(30% 0.055 238)",
+    accent:   "oklch(52% 0.13 240)",
+    accentLight: "oklch(88% 0.055 240)",
+    cta:      "oklch(46% 0.15 240)",
+    ctaText:  "#fff",
+    cream:    "oklch(97.5% 0.01 80)",
+    cardBg:   "oklch(95% 0.012 80)",
+    cardDark: "oklch(30% 0.05 240)",
+    tag:      "oklch(88% 0.055 240)",
+    tagText:  "oklch(35% 0.1 240)",
+    activeNav:"oklch(46% 0.15 240)",
+    pill:     "oklch(46% 0.15 240)",
+  },
+  plum: {
+    name: "Plum",
+    dark:     "oklch(22% 0.06 310)",
+    darkMid:  "oklch(30% 0.065 308)",
+    accent:   "oklch(52% 0.14 310)",
+    accentLight: "oklch(88% 0.065 310)",
+    cta:      "oklch(47% 0.15 308)",
+    ctaText:  "#fff",
+    cream:    "oklch(97.5% 0.012 80)",
+    cardBg:   "oklch(95% 0.016 80)",
+    cardDark: "oklch(30% 0.06 310)",
+    tag:      "oklch(88% 0.065 310)",
+    tagText:  "oklch(35% 0.12 310)",
+    activeNav:"oklch(47% 0.15 308)",
+    pill:     "oklch(47% 0.15 308)",
+  },
+};
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "theme": "slate",
+  "showStats": true,
+  "recipeView": "grid"
+}/*EDITMODE-END*/;
+
+// ─── ICON SET ─────────────────────────────────────────────────────────────────
+const Icon = ({ name, size = 20, color = "currentColor", strokeWidth = 1.6 }) => {
+  const s = { width: size, height: size, display: "block" };
+  const paths = {
+    home: <><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" /><path d="M9 21V12h6v9" /></>,
+    book: <><path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" /></>,
+    plus: <><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></>,
+    user: <><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></>,
+    search: <><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></>,
+    heart: <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />,
+    arrow_left: <><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></>,
+    arrow_right: <><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></>,
+    clock: <><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></>,
+    users: <><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" /></>,
+    zap: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />,
+    camera: <><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" /><circle cx="12" cy="13" r="4" /></>,
+    link: <><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" /></>,
+    instagram: <><rect x="2" y="2" width="20" height="20" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" /><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" /></>,
+    star: <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />,
+    grid: <><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></>,
+    list: <><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></>,
+    image: <><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></>,
+    sparkle: <><path d="M12 3v1m0 16v1M4.22 4.22l.7.7m12.16 12.16.7.7M3 12h1m16 0h1M4.22 19.78l.7-.7M18.36 5.64l.7-.7" /><circle cx="12" cy="12" r="3" /></>,
+  };
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={s}>
+      {paths[name]}
+    </svg>
+  );
+};
+
+// ─── FOOD EMOJI PLACEHOLDER ────────────────────────────────────────────────
+const FoodEmoji = ({ emoji, bg, size = 56 }) => (
+  <div style={{ width: size, height: size, borderRadius: 14, background: bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.5, flexShrink: 0 }}>
+    {emoji}
+  </div>
+);
+
+// ─── BOTTOM NAV ────────────────────────────────────────────────────────────
+const BottomNav = ({ active, onNav, t }) => {
+  const tabs = [
+    { id: "home", label: "Home", icon: "home" },
+    { id: "recipes", label: "Recipes", icon: "book" },
+    { id: "add", label: "Add", icon: "plus" },
+    { id: "profile", label: "Profile", icon: "user" },
+  ];
+  return (
+    <div style={{ display: "flex", borderTop: `1px solid oklch(90% 0.01 80)`, background: t.cream, paddingBottom: 8 }}>
+      {tabs.map(tab => {
+        const isActive = active === tab.id;
+        return (
+          <button key={tab.id} onClick={() => onNav(tab.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "8px 0 2px", background: "none", border: "none", cursor: "pointer", color: isActive ? t.activeNav : "oklch(60% 0.01 80)" }}>
+            <Icon name={tab.icon} size={22} color={isActive ? t.activeNav : "oklch(60% 0.01 80)"} strokeWidth={isActive ? 2 : 1.5} />
+            <span style={{ fontSize: 10, fontWeight: isActive ? 600 : 400, letterSpacing: 0.2 }}>{tab.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+// ─── SOURCE BADGE ──────────────────────────────────────────────────────────
+const SourceBadge = ({ type, t, dark = false }) => {
+  const labels = { instagram: "INSTA", url: "URL", photo: "PHOTO", image: "IMAGE" };
+  const icons = { instagram: "instagram", url: "link", photo: "camera", image: "image" };
+  const bg = dark ? "rgba(0,0,0,0.35)" : t.tag;
+  const color = dark ? "#fff" : t.tagText;
+  return (
+    <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: bg, borderRadius: 20, padding: "3px 8px" }}>
+      <Icon name={icons[type] || "link"} size={10} color={color} strokeWidth={2} />
+      <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.8, color }}>{labels[type] || type.toUpperCase()}</span>
+    </div>
+  );
+};
+
+// ─── SCREEN: HOME ──────────────────────────────────────────────────────────
+const HomeScreen = ({ onNav, t, showStats }) => (
+  <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.cream, overflow: "hidden" }}>
+    {/* Dark header */}
+    <div style={{ background: t.dark, padding: "54px 20px 28px", borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}>
+      <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 12, marginBottom: 6, letterSpacing: 0.3 }}>Good morning, Sarah ✦</p>
+      <h1 className="serif" style={{ color: "#fff", fontSize: 28, lineHeight: 1.15, marginBottom: showStats ? 18 : 0 }}>
+        What are you<br /><span className="serif-italic" style={{ color: t.accentLight }}>cooking today?</span>
+      </h1>
+      {showStats && (
+        <div style={{ display: "flex", gap: 0, marginBottom: 16 }}>
+          {[["24", "RECIPES"], ["8", "THIS MONTH"], ["3", "FAVORITES"]].map(([n, l], i) => (
+            <div key={i} style={{ flex: 1, borderRight: i < 2 ? "1px solid rgba(255,255,255,0.12)" : "none", paddingRight: 12, paddingLeft: i > 0 ? 12 : 0 }}>
+              <div style={{ color: "#fff", fontSize: 22, fontWeight: 600, fontFamily: "DM Serif Display" }}>{n}</div>
+              <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 9, letterSpacing: 0.8, marginTop: 1 }}>{l}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      {/* Search */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.10)", borderRadius: 12, padding: "10px 14px" }}>
+        <Icon name="search" size={15} color="rgba(255,255,255,0.45)" />
+        <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 14 }}>Search your recipes...</span>
+      </div>
+    </div>
+
+    {/* Recent saves */}
+    <div style={{ flex: 1, overflowY: "auto", padding: "18px 20px 8px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+        <span style={{ fontWeight: 600, fontSize: 16, color: "oklch(20% 0.02 80)" }}>Recent saves</span>
+        <button onClick={() => onNav("recipes")} style={{ background: "none", border: "none", cursor: "pointer", color: t.cta, fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", gap: 3 }}>
+          See all <Icon name="arrow_right" size={12} color={t.cta} />
+        </button>
+      </div>
+
+      {/* Featured dark card */}
+      <div style={{ background: t.cardDark, borderRadius: 18, padding: 16, marginBottom: 12, position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", right: 16, top: 14 }}><SourceBadge type="instagram" t={t} dark /></div>
+        <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 10, letterSpacing: 0.6, marginBottom: 6, marginTop: 4 }}>— FROM INSTAGRAM</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+          <div>
+            <h3 className="serif-italic" style={{ color: "#fff", fontSize: 20, lineHeight: 1.2, marginBottom: 8 }}>Cacio e Pepe<br />with Truffle</h3>
+            <div style={{ display: "flex", gap: 10, color: "rgba(255,255,255,0.5)", fontSize: 11 }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Icon name="clock" size={11} color="rgba(255,255,255,0.5)" /> 25 min</span>
+              <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Icon name="users" size={11} color="rgba(255,255,255,0.5)" /> 2 servings</span>
+              <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Icon name="zap" size={11} color="rgba(255,255,255,0.5)" /> 8 ingredients</span>
+            </div>
+          </div>
+          <div style={{ fontSize: 40 }}>🍝</div>
+        </div>
+      </div>
+
+      {/* Light card */}
+      <div onClick={() => onNav("recipe")} style={{ background: "#fff", borderRadius: 18, padding: 14, display: "flex", alignItems: "center", gap: 12, boxShadow: "0 1px 6px rgba(0,0,0,0.06)", cursor: "pointer" }}>
+        <FoodEmoji emoji="🥗" bg={t.accentLight} size={52} />
+        <div style={{ flex: 1 }}>
+          <div style={{ marginBottom: 4 }}><SourceBadge type="url" t={t} /></div>
+          <div style={{ fontWeight: 600, fontSize: 15, color: "oklch(18% 0.02 80)", marginBottom: 4 }}>Roasted Beet &amp; Feta Salad</div>
+          <div style={{ display: "flex", gap: 10, color: "oklch(55% 0.01 80)", fontSize: 11 }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Icon name="clock" size={11} color="oklch(55% 0.01 80)" /> 40 min</span>
+            <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Icon name="users" size={11} color="oklch(55% 0.01 80)" /> 4 servings</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Image card */}
+      <div style={{ marginTop: 10, background: t.cardBg, borderRadius: 18, padding: "10px 14px", display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ width: 52, height: 52, borderRadius: 12, background: "oklch(82% 0.04 50)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26 }}>🫐</div>
+        <div>
+          <div style={{ marginBottom: 4 }}><SourceBadge type="image" t={t} /></div>
+          <div style={{ fontWeight: 600, fontSize: 14, color: "oklch(18% 0.02 80)" }}>Blueberry Clafoutis</div>
+          <div style={{ color: "oklch(55% 0.01 80)", fontSize: 11, marginTop: 3 }}>⏱ 55 min · 6 servings</div>
+        </div>
+      </div>
+    </div>
+
+    {/* FAB */}
+    <div style={{ padding: "0 20px 8px", position: "relative" }}>
+      <button onClick={() => onNav("add")} style={{ position: "absolute", right: 24, bottom: 10, width: 48, height: 48, borderRadius: "50%", background: t.cta, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 4px 16px ${t.cta}55` }}>
+        <Icon name="plus" size={22} color="#fff" strokeWidth={2.5} />
+      </button>
+    </div>
+
+    <BottomNav active="home" onNav={onNav} t={t} />
+  </div>
+);
+
+// ─── SCREEN: RECIPE DETAIL ─────────────────────────────────────────────────
+const RecipeScreen = ({ onNav, t }) => {
+  const [checkedItems, setCheckedItems] = useState([]);
+  const ingredients = [
+    ["Spaghetti", "200g"], ["Pecorino Romano, grated", "80g"], ["Parmigiano-Reggiano", "40g"],
+    ["Black pepper, coarsely ground", "2 tsp"], ["Black truffle, shaved", "15g"], ["Salt", "to taste"],
+  ];
+  const toggle = (i) => setCheckedItems(p => p.includes(i) ? p.filter(x => x !== i) : [...p, i]);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.cream, overflow: "hidden" }}>
+      {/* Hero */}
+      <div style={{ background: t.dark, position: "relative", paddingBottom: 32, borderBottomLeftRadius: 28, borderBottomRightRadius: 28, flexShrink: 0 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", padding: "54px 18px 0" }}>
+          <button onClick={() => onNav("home")} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon name="arrow_left" size={16} color="#fff" />
+          </button>
+          <button style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon name="heart" size={16} color="#fff" />
+          </button>
+        </div>
+        <div style={{ textAlign: "center", fontSize: 64, marginTop: 4, marginBottom: 6 }}>🍝</div>
+        <div style={{ padding: "0 20px" }}>
+          <div style={{ marginBottom: 8 }}><SourceBadge type="instagram" t={t} dark /></div>
+          <h2 className="serif" style={{ color: "#fff", fontSize: 26, lineHeight: 1.2 }}>Cacio e Pepe<br /><span className="serif-italic" style={{ color: t.accentLight }}>with Black Truffle</span></h2>
+        </div>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 16px" }}>
+        {/* Stats row */}
+        <div style={{ display: "flex", background: "#fff", borderRadius: 16, margin: "16px 0 20px", boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}>
+          {[["25", "MINUTES"], ["2", "SERVINGS"], ["8", "INGREDIENTS"], ["4.8", "RATING"]].map(([val, label], i) => (
+            <div key={i} style={{ flex: 1, textAlign: "center", padding: "12px 0", borderRight: i < 3 ? `1px solid oklch(92% 0.01 80)` : "none" }}>
+              <div style={{ fontFamily: "DM Serif Display", fontSize: 18, color: "oklch(18% 0.02 80)" }}>
+                {label === "RATING" ? <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 2 }}><svg width="13" height="13" viewBox="0 0 24 24" fill={t.cta}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg><span>{val}</span></span> : val}
+              </div>
+              <div style={{ fontSize: 8, letterSpacing: 0.8, color: "oklch(60% 0.01 80)", marginTop: 2 }}>{label}</div>
+            </div>
+          ))}
+        </div>
+
+        <h3 style={{ fontWeight: 600, fontSize: 17, marginBottom: 12, color: "oklch(15% 0.02 80)" }}>Ingredients</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {ingredients.map(([name, amount], i) => {
+            const checked = checkedItems.includes(i);
+            return (
+              <div key={i} onClick={() => toggle(i)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 0", borderBottom: "1px solid oklch(92% 0.01 80)", cursor: "pointer" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${checked ? t.cta : "oklch(80% 0.01 80)"}`, background: checked ? t.cta : "transparent", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {checked && <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4.5,7.5 8,3" stroke="#fff" strokeWidth="2" strokeLinecap="round" /></svg>}
+                  </div>
+                  <span style={{ fontSize: 14, color: checked ? "oklch(65% 0.01 80)" : "oklch(20% 0.02 80)", textDecoration: checked ? "line-through" : "none" }}>{name}</span>
+                </div>
+                <span style={{ fontSize: 13, color: "oklch(55% 0.01 80)", fontWeight: 500 }}>{amount}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        <h3 style={{ fontWeight: 600, fontSize: 17, marginTop: 24, marginBottom: 12, color: "oklch(15% 0.02 80)" }}>Steps</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, paddingBottom: 16 }}>
+          {[
+            "Bring a large pot of salted water to a boil. Cook spaghetti until al dente, reserving 1 cup of pasta water before draining.",
+            "Toast black pepper in a dry pan over medium heat for 1–2 minutes until fragrant. Remove and set aside.",
+            "Combine Pecorino Romano and Parmigiano-Reggiano in a bowl. Add a splash of cold water and mix into a thick paste.",
+            "Add drained pasta to the pan off-heat. Toss with cheese paste, adding pasta water gradually until silky and creamy.",
+            "Plate immediately and finish with shaved black truffle and an extra crack of pepper.",
+          ].map((step, i) => (
+            <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+              <div style={{ width: 26, height: 26, borderRadius: "50%", background: t.accentLight, color: t.cta, fontWeight: 700, fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+                {i + 1}
+              </div>
+              <p style={{ fontSize: 14, color: "oklch(25% 0.02 80)", lineHeight: 1.55, flex: 1, margin: 0 }}>{step}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <BottomNav active="recipes" onNav={onNav} t={t} />
+    </div>
+  );
+};
+
+// ─── SCREEN: ADD RECIPE ────────────────────────────────────────────────────
+const AddScreen = ({ onNav, t }) => {
+  const [urlText, setUrlText] = useState("https://www.seriouseats.com/...");
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.cream }}>
+      <div style={{ padding: "54px 20px 0" }}>
+        <button onClick={() => onNav("home")} style={{ background: "none", border: "none", cursor: "pointer", color: t.cta, display: "flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 500, marginBottom: 14 }}>
+          <Icon name="arrow_left" size={14} color={t.cta} /> Back
+        </button>
+        <h2 className="serif" style={{ fontSize: 28, color: "oklch(15% 0.02 80)", marginBottom: 4 }}>Save a Recipe</h2>
+        <p style={{ fontSize: 13, color: "oklch(55% 0.01 80)", marginBottom: 22 }}>Three ways to add to your collection</p>
+
+        {/* Instagram share */}
+        <div style={{ background: t.dark, borderRadius: 16, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, #f58529, #dd2a7b, #515bd4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon name="instagram" size={18} color="#fff" strokeWidth={1.8} />
+            </div>
+            <span style={{ color: "#fff", fontWeight: 600, fontSize: 15 }}>Share from Instagram</span>
+          </div>
+          <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon name="arrow_right" size={14} color="#fff" />
+          </div>
+        </div>
+
+        {/* URL section */}
+        <div style={{ background: "#fff", borderRadius: 16, padding: 16, marginBottom: 14, boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "oklch(60% 0.01 80)", marginBottom: 10 }}>PASTE A RECIPE URL</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, background: t.cardBg, borderRadius: 10, padding: "10px 12px", marginBottom: 12 }}>
+            <Icon name="link" size={14} color="oklch(60% 0.01 80)" />
+            <input value={urlText} onChange={e => setUrlText(e.target.value)} style={{ flex: 1, border: "none", background: "transparent", fontSize: 13, color: "oklch(35% 0.01 80)", fontFamily: "DM Sans", outline: "none" }} />
+            <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: t.cta, fontWeight: 600 }}>Paste</button>
+          </div>
+          <button style={{ width: "100%", background: t.cta, color: "#fff", border: "none", borderRadius: 11, padding: "12px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "DM Sans", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+            Generate Recipe <Icon name="arrow_right" size={14} color="#fff" />
+          </button>
+        </div>
+
+        {/* Photo upload */}
+        <div style={{ background: "#fff", borderRadius: 16, padding: 16, boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "oklch(60% 0.01 80)", marginBottom: 10 }}>UPLOAD A PHOTO</div>
+          <div style={{ border: `2px dashed oklch(85% 0.01 80)`, borderRadius: 12, padding: "24px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+            <Icon name="camera" size={28} color="oklch(70% 0.01 80)" />
+            <p style={{ textAlign: "center", fontSize: 13, color: "oklch(55% 0.01 80)", lineHeight: 1.45 }}>
+              Photo of a recipe card,<br />handwritten notes, or a<br />cookbook page
+            </p>
+            <button style={{ marginTop: 4, background: t.accentLight, color: t.cta, border: "none", borderRadius: 20, padding: "8px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "DM Sans" }}>
+              Choose Photo
+            </button>
+          </div>
+        </div>
+      </div>
+      <div style={{ flex: 1 }} />
+      <BottomNav active="add" onNav={onNav} t={t} />
+    </div>
+  );
+};
+
+// ─── SCREEN: RECIPES GRID ──────────────────────────────────────────────────
+const RecipesGrid = ({ onNav, t, recipeView, setRecipeView }) => {
+  const [activeFilter, setActiveFilter] = useState("All");
+  const filters = ["All", "Instagram", "URL", "Image", "Favorites"];
+  const recipes = [
+    { id: 1, name: "Cacio e Pepe with Black Truffle", emoji: "🍝", bg: "oklch(78% 0.06 70)", type: "instagram", time: "25m", servings: 2, favorited: false },
+    { id: 2, name: "Roasted Beet & Feta", emoji: "🥗", bg: "oklch(80% 0.08 140)", type: "url", time: "40m", servings: 4, favorited: false },
+    { id: 3, name: "Miso Short Ribs", emoji: "🍲", bg: "oklch(75% 0.07 35)", type: "photo", time: "3h", servings: 6, favorited: false },
+    { id: 4, name: "Blueberry Clafoutis", emoji: "🫐", bg: "oklch(78% 0.06 270)", type: "instagram", time: "55m", servings: 6, favorited: true },
+    { id: 5, name: "Miso Ramen", emoji: "🍜", bg: "oklch(85% 0.06 85)", type: "url", time: "1h", servings: 2, favorited: false },
+  ];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.cream }}>
+      <div style={{ padding: "54px 20px 0", flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <h2 style={{ fontFamily: "DM Serif Display", fontSize: 26 }}>
+            My <span className="serif-italic" style={{ color: t.cta }}>Recipes</span>
+          </h2>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 12, color: "oklch(55% 0.01 80)" }}>24 saved</span>
+            <button onClick={() => setRecipeView("grid")} style={{ width: 32, height: 32, borderRadius: 9, background: recipeView === "grid" ? t.cta : "oklch(92% 0.01 80)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon name="grid" size={15} color={recipeView === "grid" ? "#fff" : "oklch(50% 0.01 80)"} strokeWidth={1.8} />
+            </button>
+            <button onClick={() => setRecipeView("list")} style={{ width: 32, height: 32, borderRadius: 9, background: recipeView === "list" ? t.cta : "oklch(92% 0.01 80)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon name="list" size={15} color={recipeView === "list" ? "#fff" : "oklch(50% 0.01 80)"} strokeWidth={1.8} />
+            </button>
+          </div>
+        </div>
+
+        {/* Search */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#fff", borderRadius: 12, padding: "10px 14px", marginBottom: 12, boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+          <Icon name="search" size={15} color="oklch(65% 0.01 80)" />
+          <span style={{ color: "oklch(65% 0.01 80)", fontSize: 13 }}>Search recipes...</span>
+        </div>
+
+        {/* Filters */}
+        <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 12, scrollbarWidth: "none" }}>
+          {filters.map(f => (
+            <button key={f} onClick={() => setActiveFilter(f)} style={{ flexShrink: 0, background: activeFilter === f ? t.pill : "transparent", color: activeFilter === f ? "#fff" : "oklch(40% 0.01 80)", border: activeFilter === f ? "none" : "1.5px solid oklch(82% 0.01 80)", borderRadius: 20, padding: "6px 14px", fontSize: 13, fontWeight: activeFilter === f ? 600 : 400, cursor: "pointer", fontFamily: "DM Sans", transition: "all 0.15s" }}>
+              {f}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 12px" }}>
+        {recipeView === "grid" ? (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            {/* Big card */}
+            <div onClick={() => onNav("recipe")} style={{ gridRow: "span 2", background: "#fff", borderRadius: 18, overflow: "hidden", cursor: "pointer", boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
+              <div style={{ background: recipes[0].bg, height: 170, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", fontSize: 52 }}>
+                {recipes[0].emoji}
+                <div style={{ position: "absolute", top: 10, left: 10 }}><SourceBadge type={recipes[0].type} t={t} /></div>
+                <button style={{ position: "absolute", top: 8, right: 8, background: "none", border: "none", cursor: "pointer" }}>
+                  <Icon name="heart" size={16} color="rgba(0,0,0,0.35)" strokeWidth={1.8} />
+                </button>
+              </div>
+              <div style={{ padding: "10px 12px 12px" }}>
+                <div style={{ fontWeight: 600, fontSize: 14, color: "oklch(15% 0.02 80)", marginBottom: 5, lineHeight: 1.3 }}>{recipes[0].name}</div>
+                <div style={{ display: "flex", gap: 8, color: "oklch(55% 0.01 80)", fontSize: 11 }}>
+                  <span>⏱ {recipes[0].time}</span>
+                  <span>👥 {recipes[0].servings}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Small cards */}
+            {recipes.slice(1, 5).map((r, i) => (
+              <div key={r.id} style={{ background: "#fff", borderRadius: 18, overflow: "hidden", boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
+                <div style={{ background: r.bg, height: 100, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", fontSize: 36 }}>
+                  {r.emoji}
+                  <div style={{ position: "absolute", top: 8, left: 8 }}><SourceBadge type={r.type} t={t} /></div>
+                  {r.favorited && (
+                    <div style={{ position: "absolute", top: 6, right: 8 }}>
+                      <Icon name="heart" size={14} color={t.cta} strokeWidth={0} />
+                    </div>
+                  )}
+                </div>
+                <div style={{ padding: "8px 10px 10px" }}>
+                  <div style={{ fontWeight: 600, fontSize: 12, color: "oklch(15% 0.02 80)", marginBottom: 3, lineHeight: 1.3 }}>{r.name}</div>
+                  <div style={{ color: "oklch(55% 0.01 80)", fontSize: 10 }}>⏱ {r.time}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* LIST VIEW */
+          <div>
+            {/* In progress */}
+            <div style={{ marginBottom: 18 }}>
+              <h3 className="serif-italic" style={{ fontSize: 15, color: "oklch(40% 0.01 80)", marginBottom: 10 }}>In progress</h3>
+              <div style={{ background: t.cardBg, borderRadius: 16, padding: 14, border: `1.5px dashed oklch(82% 0.01 80)` }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 8 }}>
+                  <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#e07" }}></div>
+                  <span style={{ fontSize: 11, color: "#e07", fontWeight: 500 }}>Extracting recipe...</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: "oklch(80% 0.05 240)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>📱</div>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 14, color: "oklch(15% 0.02 80)", marginBottom: 4 }}>New Instagram reel</div>
+                    <SourceBadge type="instagram" t={t} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* This month */}
+            <div>
+              <h3 className="serif-italic" style={{ fontSize: 15, color: "oklch(40% 0.01 80)", marginBottom: 10 }}>This month</h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {recipes.slice(0, 3).map(r => (
+                  <div key={r.id} onClick={() => onNav("recipe")} style={{ background: "#fff", borderRadius: 16, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12, boxShadow: "0 1px 5px rgba(0,0,0,0.05)", cursor: "pointer" }}>
+                    <div style={{ width: 48, height: 48, borderRadius: 13, background: r.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 }}>{r.emoji}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.8, color: t.cta, marginBottom: 3 }}>{r.type.toUpperCase()}</div>
+                      <div style={{ fontWeight: 600, fontSize: 14, color: "oklch(15% 0.02 80)", marginBottom: 4 }}>{r.name.length > 22 ? r.name.slice(0, 22) + "..." : r.name}</div>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        <span style={{ fontSize: 11, color: "oklch(55% 0.01 80)" }}>⏱ {r.time}</span>
+                        {r.servings && <span style={{ fontSize: 11, color: "oklch(55% 0.01 80)" }}>👥 {r.servings}</span>}
+                        <span style={{ background: t.tag, color: t.tagText, fontSize: 10, padding: "2px 8px", borderRadius: 10, fontWeight: 500 }}>
+                          {["Pasta", "Salad", "Slow cook"][recipes.indexOf(r)] || "Main"}
+                        </span>
+                      </div>
+                    </div>
+                    <Icon name="arrow_right" size={14} color="oklch(70% 0.01 80)" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <BottomNav active="recipes" onNav={onNav} t={t} />
+    </div>
+  );
+};
+
+// ─── MAIN APP ──────────────────────────────────────────────────────────────
+function App() {
+
+  const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const t = THEMES[tweaks.theme] || THEMES.forest;
+
+  const [nav, setNav] = useState("home");
+  const [recipeView, setRecipeView] = useState(tweaks.recipeView || "grid");
+
+  const handleNav = (screen) => {
+    if (screen === "recipes" || screen === "recipe") {
+      setNav(screen);
+    } else {
+      setNav(screen);
+    }
+  };
+
+  const screens = {
+    home:    <HomeScreen onNav={handleNav} t={t} showStats={tweaks.showStats} />,
+    recipe:  <RecipeScreen onNav={handleNav} t={t} />,
+    add:     <AddScreen onNav={handleNav} t={t} />,
+    recipes: <RecipesGrid onNav={handleNav} t={t} recipeView={recipeView} setRecipeView={(v) => { setRecipeView(v); setTweak("recipeView", v); }} />,
+    profile: <HomeScreen onNav={handleNav} t={t} showStats={tweaks.showStats} />,
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", gap: 0 }}>
+      <IOSDevice width={393} height={852} dark={nav === "recipe"}>
+        <div style={{ width: "100%", height: "100%", background: t.cream, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+          {screens[nav] || screens.home}
+        </div>
+      </IOSDevice>
+
+      <TweaksPanel>
+        <TweakSection label="Color Theme">
+          <TweakRadio
+            id="theme"
+            value={tweaks.theme}
+            options={[
+              { value: "forest", label: "Forest" },
+              { value: "slate",  label: "Slate" },
+              { value: "plum",   label: "Plum" },
+            ]}
+            onChange={v => setTweak("theme", v)}
+          />
+        </TweakSection>
+        <TweakSection label="Home Stats">
+          <TweakRadio
+            id="showStats"
+            value={tweaks.showStats ? "on" : "off"}
+            options={[{ value: "on", label: "Show" }, { value: "off", label: "Hide" }]}
+            onChange={v => setTweak("showStats", v === "on")}
+          />
+        </TweakSection>
+      </TweaksPanel>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

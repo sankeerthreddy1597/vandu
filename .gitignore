@@ -1,0 +1,56 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Build outputs
+dist
+build
+.next
+out
+
+# Turbo
+.turbo
+
+# Prisma
+packages/db/generated
+
+# Expo
+apps/mobile/.expo
+apps/mobile/ios
+apps/mobile/android
+apps/mobile/dist
+
+# EAS (contains org/project IDs — add to source control only if non-sensitive)
+eas.json
+
+# Certificates & keys
+*.pem
+*.key
+*.p8
+*.p12
+*.mobileprovision
+
+# Environment — ignore all variants, allow only .env.example
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
