@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "Vandu",
+    "slug": "vandu",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "vandu",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#2C1A0E"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.vandu.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#2C1A0E"
+      },
+      "package": "com.vandu.app",
+      "edgeToEdgeEnabled": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
