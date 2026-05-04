@@ -14,6 +14,7 @@
     "@expo-google-fonts/dm-sans": "^0.2.3",
     "@expo-google-fonts/lora": "^0.2.3",
     "@expo-google-fonts/playfair-display": "^0.2.3",
+    "@expo/vector-icons": "^15.1.1",
     "@vandu/types": "workspace:*",
     "@vandu/validators": "workspace:*",
     "expo": "~54.0.33",
@@ -30,8 +31,8 @@
     "expo-status-bar": "~3.0.9",
     "expo-web-browser": "~15.0.11",
     "react": "19.1.0",
-    "react-native": "0.81.5",
     "react-freeze": "^1.0.0",
+    "react-native": "0.81.5",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0"
   },
