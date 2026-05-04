@@ -91,7 +91,7 @@ export default function AddScreen() {
                 Open a reel, tap share, and send it here — we handle the rest automatically.
               </Text>
             </View>
-            <Text style={{ color: "rgba(245,239,224,0.4)", fontSize: 16 }}>→</Text>
+            <Text style={{ color: "rgba(237,243,249,0.4)", fontSize: 16 }}>→</Text>
           </LinearGradient>
 
           {/* URL input */}
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   instaDesc: {
     fontFamily: "Lora_400Regular_Italic",
     fontSize: 11.5,
-    color: "rgba(245,239,224,0.6)",
+    color: "rgba(237,243,249,0.6)",
     lineHeight: 17,
   },
   card: {

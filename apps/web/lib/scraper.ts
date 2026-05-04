@@ -1,8 +1,8 @@
 export async function scrapeUrl(url: string): Promise<string> {
   const scraperUrl = process.env.SCRAPER_SERVICE_URL
   if (!scraperUrl) {
-    // Scraper service not deployed yet — return URL as-is for the LLM to handle
-    return `Recipe URL: ${url}\n\nNote: Full page scraping not yet available. Please extract whatever recipe information can be inferred from the URL and any available metadata.`
+    // Scraper service not deployed — pass URL directly to LLM as fallback
+    return `Recipe URL: ${url}\n\nNote: Scraping service unavailable. Extract whatever recipe information can be inferred from the URL and metadata.`
   }
 
   const res = await fetch(`${scraperUrl}/scrape`, {
@@ -14,7 +14,11 @@ export async function scrapeUrl(url: string): Promise<string> {
     body: JSON.stringify({ url }),
   })
 
-  if (!res.ok) throw new Error(`Scraper returned ${res.status}`)
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(`Scraper failed (${res.status}): ${(body as any).error ?? "unknown error"}`)
+  }
+
   const data = await res.json()
   return data.content as string
 }

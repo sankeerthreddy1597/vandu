@@ -9,7 +9,7 @@ import {
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useRouter } from "expo-router"
-import { useUser } from "@clerk/clerk-expo"
+import { useUser } from "@clerk/expo"
 import { colors } from "@/constants/theme"
 import { useRecipes } from "@/hooks/useRecipes"
 import { RecipeCard } from "@/components/RecipeCard"

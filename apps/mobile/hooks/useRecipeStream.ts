@@ -1,58 +1,50 @@
 import { useState, useEffect, useRef } from "react"
-import { useAuth } from "@clerk/clerk-expo"
+import { useAuth } from "@clerk/expo"
 import type { RecipeStatus } from "@/lib/api"
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000"
+const POLL_INTERVAL = 1500
 
 export function useRecipeStream(recipeId: string, initialStatus: RecipeStatus) {
   const [status, setStatus] = useState<RecipeStatus>(initialStatus)
   const [error, setError] = useState<string | null>(null)
   const { getToken } = useAuth()
-  const abortRef = useRef<AbortController | null>(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const activeRef = useRef(true)
 
   useEffect(() => {
     if (initialStatus === "DONE" || initialStatus === "FAILED") return
 
-    const controller = new AbortController()
-    abortRef.current = controller
+    activeRef.current = true
 
-    async function startStream() {
-      const token = await getToken()
+    async function poll() {
+      if (!activeRef.current) return
       try {
-        const res = await fetch(`${API_URL}/api/recipe/${recipeId}/stream`, {
+        const token = await getToken()
+        const res = await fetch(`${API_URL}/api/recipe/${recipeId}`, {
           headers: { Authorization: `Bearer ${token}` },
-          signal: controller.signal,
         })
-
-        const reader = res.body?.getReader()
-        if (!reader) return
-        const decoder = new TextDecoder()
-        let buffer = ""
-
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-          buffer += decoder.decode(value, { stream: true })
-          const parts = buffer.split("\n\n")
-          buffer = parts.pop() ?? ""
-
-          for (const part of parts) {
-            if (part.startsWith("data: ")) {
-              const data = JSON.parse(part.slice(6))
-              if (data.status) setStatus(data.status)
-              if (data.error) setError(data.error)
-            }
-          }
+        if (!res.ok) return
+        const data = await res.json()
+        if (!activeRef.current) return
+        if (data.status) setStatus(data.status)
+        if (data.error) setError(data.error)
+        if (data.status !== "DONE" && data.status !== "FAILED") {
+          timerRef.current = setTimeout(poll, POLL_INTERVAL)
         }
-      } catch (e: unknown) {
-        if (e instanceof Error && e.name !== "AbortError") {
-          console.error("Stream error:", e)
+      } catch {
+        if (activeRef.current) {
+          timerRef.current = setTimeout(poll, POLL_INTERVAL)
         }
       }
     }
 
-    startStream()
-    return () => controller.abort()
+    poll()
+
+    return () => {
+      activeRef.current = false
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
   }, [recipeId, initialStatus])
 
   return { status, error }

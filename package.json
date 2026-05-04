@@ -21,6 +21,9 @@
   },
   "packageManager": "pnpm@10.33.2",
   "pnpm": {
+    "overrides": {
+      "react-dom": "19.1.0"
+    },
     "onlyBuiltDependencies": [
       "@clerk/shared",
       "@prisma/client",

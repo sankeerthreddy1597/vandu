@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { useUser, useAuth } from "@clerk/clerk-expo"
+import { useUser, useAuth } from "@clerk/expo"
 import { colors } from "@/constants/theme"
 
 export default function ProfileScreen() {

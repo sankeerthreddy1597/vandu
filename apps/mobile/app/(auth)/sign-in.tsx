@@ -10,52 +10,35 @@ import {
   Platform,
   ScrollView,
 } from "react-native"
-import { useSignIn } from "@clerk/clerk-expo"
+import { useSignIn } from "@clerk/expo"
+import { useRouter, Link } from "expo-router"
 import { LinearGradient } from "expo-linear-gradient"
 import { colors } from "@/constants/theme"
 
 export default function SignIn() {
-  const { signIn, setActive, isLoaded } = useSignIn()
+  const { signIn, errors, fetchStatus } = useSignIn()
+  const router = useRouter()
   const [email, setEmail] = useState("")
-  const [code, setCode] = useState("")
-  const [step, setStep] = useState<"email" | "code">("email")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+  const [password, setPassword] = useState("")
 
-  async function sendCode() {
-    if (!isLoaded || !email.trim()) return
-    setLoading(true)
-    setError("")
-    try {
-      await signIn.create({ identifier: email.trim(), strategy: "email_code" })
-      setStep("code")
-    } catch (e: unknown) {
-      const err = e as { errors?: { message: string }[] }
-      setError(err.errors?.[0]?.message ?? "Something went wrong")
-    } finally {
-      setLoading(false)
+  async function handleSubmit() {
+    const { error } = await signIn.password({ emailAddress: email.trim(), password })
+    if (error) return
+
+    if (signIn.status === "complete") {
+      await signIn.finalize({
+        navigate: ({ decorateUrl }) => {
+          const url = decorateUrl("/")
+          router.replace(url as any)
+        },
+      })
     }
   }
 
-  async function verifyCode() {
-    if (!isLoaded) return
-    setLoading(true)
-    setError("")
-    try {
-      const result = await signIn.attemptFirstFactor({ strategy: "email_code", code })
-      if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId })
-      }
-    } catch (e: unknown) {
-      const err = e as { errors?: { message: string }[] }
-      setError(err.errors?.[0]?.message ?? "Invalid code")
-    } finally {
-      setLoading(false)
-    }
-  }
+  const isLoading = fetchStatus === "fetching"
 
   return (
-    <LinearGradient colors={[colors.darkBrown, "#1A0F08"]} style={styles.container}>
+    <LinearGradient colors={[colors.darkBrown, "#060E18"]} style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.inner}
@@ -70,68 +53,57 @@ export default function SignIn() {
 
           {/* Card */}
           <View style={styles.card}>
-            {step === "email" ? (
-              <>
-                <Text style={styles.cardTitle}>Sign in</Text>
-                <Text style={styles.cardSub}>We'll send a code to your email</Text>
+            <Text style={styles.cardTitle}>Sign in</Text>
+            <Text style={styles.cardSub}>Welcome back!</Text>
 
-                <Text style={styles.label}>Email address</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="you@example.com"
-                  placeholderTextColor={colors.muted}
-                  value={email}
-                  onChangeText={setEmail}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  autoFocus
-                />
-                {error ? <Text style={styles.error}>{error}</Text> : null}
-                <TouchableOpacity
-                  style={[styles.btn, (!email.trim() || loading) && styles.btnDisabled]}
-                  onPress={sendCode}
-                  disabled={!email.trim() || loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="white" size="small" />
-                  ) : (
-                    <Text style={styles.btnText}>Send code →</Text>
-                  )}
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                <Text style={styles.cardTitle}>Check your email</Text>
-                <Text style={styles.cardSub}>Code sent to {email}</Text>
-
-                <Text style={styles.label}>6-digit code</Text>
-                <TextInput
-                  style={[styles.input, styles.codeInput]}
-                  placeholder="000000"
-                  placeholderTextColor={colors.muted}
-                  value={code}
-                  onChangeText={setCode}
-                  keyboardType="number-pad"
-                  maxLength={6}
-                  autoFocus
-                />
-                {error ? <Text style={styles.error}>{error}</Text> : null}
-                <TouchableOpacity
-                  style={[styles.btn, (code.length < 6 || loading) && styles.btnDisabled]}
-                  onPress={verifyCode}
-                  disabled={code.length < 6 || loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="white" size="small" />
-                  ) : (
-                    <Text style={styles.btnText}>Verify →</Text>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => { setStep("email"); setCode(""); setError("") }} style={styles.backBtn}>
-                  <Text style={styles.backText}>← Use a different email</Text>
-                </TouchableOpacity>
-              </>
+            <Text style={styles.label}>Email address</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="you@example.com"
+              placeholderTextColor={colors.muted}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              autoFocus
+            />
+            {errors?.fields?.identifier && (
+              <Text style={styles.error}>{errors.fields.identifier.message}</Text>
             )}
+
+            <Text style={styles.label}>Password</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter password"
+              placeholderTextColor={colors.muted}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+            {errors?.fields?.password && (
+              <Text style={styles.error}>{errors.fields.password.message}</Text>
+            )}
+
+            <TouchableOpacity
+              style={[styles.btn, (!email.trim() || !password || isLoading) && styles.btnDisabled]}
+              onPress={handleSubmit}
+              disabled={!email.trim() || !password || isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <Text style={styles.btnText}>Sign in →</Text>
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Don't have an account? </Text>
+              <Link href="/(auth)/sign-up" asChild>
+                <TouchableOpacity>
+                  <Text style={styles.link}>Create one</Text>
+                </TouchableOpacity>
+              </Link>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -154,7 +126,7 @@ const styles = StyleSheet.create({
   tagline: {
     fontFamily: "Lora_400Regular_Italic",
     fontSize: 14,
-    color: "rgba(245,239,224,0.5)",
+    color: "rgba(237,243,249,0.5)",
     marginTop: 6,
   },
   card: {
@@ -199,12 +171,6 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     marginBottom: 16,
   },
-  codeInput: {
-    textAlign: "center",
-    fontSize: 24,
-    letterSpacing: 8,
-    fontFamily: "PlayfairDisplay_400Regular",
-  },
   error: {
     fontFamily: "DMSans_400Regular",
     fontSize: 12,
@@ -226,10 +192,20 @@ const styles = StyleSheet.create({
     color: "white",
     letterSpacing: 0.3,
   },
-  backBtn: { alignItems: "center", marginTop: 18 },
-  backText: {
-    fontFamily: "Lora_400Regular_Italic",
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 20,
+  },
+  footerText: {
+    fontFamily: "Lora_400Regular",
     fontSize: 13,
     color: colors.muted,
+  },
+  link: {
+    fontFamily: "DMSans_500Medium",
+    fontSize: 13,
+    color: colors.terracotta,
   },
 })

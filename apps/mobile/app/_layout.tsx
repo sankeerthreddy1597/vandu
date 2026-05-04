@@ -1,4 +1,4 @@
-import { ClerkProvider, useAuth } from "@clerk/clerk-expo"
+import { ClerkProvider, useAuth } from "@clerk/expo"
 import * as SecureStore from "expo-secure-store"
 import { Slot, useRouter, useSegments } from "expo-router"
 import { useEffect } from "react"
@@ -11,7 +11,7 @@ import {
   PlayfairDisplay_600SemiBold_Italic,
 } from "@expo-google-fonts/playfair-display"
 import { Lora_400Regular, Lora_500Medium, Lora_400Regular_Italic } from "@expo-google-fonts/lora"
-import { DMSans_300Light, DMSans_400Regular, DMSans_500Medium } from "@expo-google-fonts/dm-sans"
+import { DMSans_400Regular, DMSans_500Medium } from "@expo-google-fonts/dm-sans"
 import { View, ActivityIndicator } from "react-native"
 import { colors } from "@/constants/theme"
 
@@ -32,9 +32,10 @@ function InitialLayout() {
   useEffect(() => {
     if (!isLoaded) return
     const inTabsGroup = segments[0] === "(tabs)"
+    const inAuthGroup = segments[0] === "(auth)"
     if (isSignedIn && !inTabsGroup) {
       router.replace("/(tabs)/")
-    } else if (!isSignedIn) {
+    } else if (!isSignedIn && !inAuthGroup) {
       router.replace("/(auth)/sign-in")
     }
   }, [isSignedIn, segments, isLoaded])
@@ -51,7 +52,7 @@ function InitialLayout() {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     PlayfairDisplay_400Regular,
     PlayfairDisplay_600SemiBold,
     PlayfairDisplay_700Bold,
@@ -60,12 +61,11 @@ export default function RootLayout() {
     Lora_400Regular,
     Lora_500Medium,
     Lora_400Regular_Italic,
-    DMSans_300Light,
     DMSans_400Regular,
     DMSans_500Medium,
   })
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded && !fontError) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.darkBrown, alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator color={colors.sand} />

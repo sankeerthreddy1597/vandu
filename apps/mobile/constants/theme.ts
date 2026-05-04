@@ -1,22 +1,22 @@
 export const colors = {
   // Backgrounds
-  darkBrown: "#2C1A0E",      // header / hero background
-  darkMid: "#3C2A1E",        // slightly lighter dark
-  cream: "#FAF5EC",           // main screen background
-  parchment: "#F5EFE0",       // input backgrounds, subtle fills
-  cardBg: "#F0E8D8",          // card background variant
+  darkBrown: "#0D1A2A",       // header / hero background (slate navy)
+  darkMid: "#182C40",         // slightly lighter dark navy
+  cream: "#F7F9F8",           // main screen background (near-white)
+  parchment: "#EEF3F8",       // input backgrounds, subtle fills (light blue-white)
+  cardBg: "#EAF0F8",          // card background variant (very light blue)
 
   // Text
-  ink: "#2A1A0E",             // primary text
-  warmBrown: "#6B4C35",       // body text, secondary
-  muted: "#9B8878",           // placeholder, tertiary text
-  sand: "#D4B896",            // accent text on dark backgrounds
-  parchmentText: "#F5EFE0",   // light text on dark
+  ink: "#141E2A",             // primary text (deep navy)
+  warmBrown: "#4A5F78",       // body text, secondary (slate gray-blue)
+  muted: "#7A90A8",           // placeholder, tertiary text
+  sand: "#A8C4DC",            // accent text on dark backgrounds
+  parchmentText: "#EDF3F9",   // light text on dark
 
   // Brand
-  terracotta: "#C4623A",      // CTA buttons, active elements
-  sage: "#8BA888",            // success / done states
+  terracotta: "#3264A8",      // CTA buttons, active elements (slate blue)
+  sage: "#4A9B8A",            // success / done states
 
   // Borders / subtle fills
-  sandLight: "#EFE5D4",       // borders, dividers, chip outlines
+  sandLight: "#D0DEF0",       // borders, dividers, chip outlines
 }
