@@ -1,6 +1,6 @@
 import { ClerkProvider, useAuth } from "@clerk/expo"
 import * as SecureStore from "expo-secure-store"
-import { Slot, useRouter, useSegments } from "expo-router"
+import { Stack, useRouter, useSegments } from "expo-router"
 import { useEffect } from "react"
 import { useFonts } from "expo-font"
 import {
@@ -31,10 +31,9 @@ function InitialLayout() {
 
   useEffect(() => {
     if (!isLoaded) return
-    const inTabsGroup = segments[0] === "(tabs)"
     const inAuthGroup = segments[0] === "(auth)"
-    if (isSignedIn && !inTabsGroup) {
-      router.replace("/(tabs)/")
+    if (isSignedIn && inAuthGroup) {
+      router.replace("/(tabs)")
     } else if (!isSignedIn && !inAuthGroup) {
       router.replace("/(auth)/sign-in")
     }
@@ -48,7 +47,7 @@ function InitialLayout() {
     )
   }
 
-  return <Slot />
+  return <Stack screenOptions={{ headerShown: false }} />
 }
 
 export default function RootLayout() {

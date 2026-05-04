@@ -114,6 +114,9 @@ importers:
 
   apps/scraper:
     dependencies:
+      dotenv:
+        specifier: ^16.4.0
+        version: 16.4.7
       express:
         specifier: ^4.21.0
         version: 4.22.1

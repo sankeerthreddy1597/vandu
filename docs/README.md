@@ -1,22 +1,85 @@
-# CODING AGENTS: READ THIS FIRST
+# Vandu
 
-This is a **handoff bundle** from Claude Design (claude.ai/design).
+A personal recipe-saving app for iOS. Save recipes from anywhere — Instagram reels, any URL on the web, or a photo of a recipe card — and get a clean, structured result with ingredients and step-by-step instructions.
 
-A user mocked up designs in HTML/CSS/JS using an AI design tool, then exported this bundle so a coding agent can implement the designs for real.
+---
 
-## What you should do — IMPORTANT
+## Features
 
-**Read `vandu/project/Vandu.html` in full.** The user had this file open when they triggered the handoff, so it's almost certainly the primary design they want built. Read it top to bottom — don't skim. Then **follow its imports**: open every file it pulls in (shared components, CSS, scripts) so you understand how the pieces fit together before you start implementing.
+### Saving recipes
 
-**If anything is ambiguous, ask the user to confirm before you start implementing.** It's much cheaper to clarify scope up front than to build the wrong thing.
+- **Instagram** — paste an Instagram reel or post URL and the app extracts the recipe from the caption and comments
+- **Recipe URLs** — paste any recipe page URL; the scraper pulls the full page content and the LLM structures it
+- **Photo / image** — upload a photo of a recipe card, handwritten notes, or a cookbook page; Claude vision reads it directly
 
-## About the design files
+### Processing pipeline
 
-The design medium is **HTML/CSS/JS** — these are prototypes, not production code. Your job is to **recreate them pixel-perfectly** in whatever technology makes sense for the target codebase (React, Vue, native, whatever fits). Match the visual output; don't copy the prototype's internal structure unless it happens to fit.
+Each save triggers an async pipeline with real-time status updates:
 
-**Don't render these files in a browser or take screenshots unless the user asks you to.** Everything you need — dimensions, colors, layout rules — is spelled out in the source. Read the HTML and CSS directly; a screenshot won't tell you anything they don't.
+1. **Scraping** — Playwright fetches the URL (tries JSON-LD schema first, falls back to page text)
+2. **Extracting** — Claude structures the raw content into typed ingredients and steps using `generateObject`
+3. **Done** — recipe is persisted and immediately readable
 
-## Bundle contents
+The mobile app polls for status and updates the UI as each step completes.
 
-- `vandu/README.md` — this file
-- `vandu/project/` — the `Vandu` project files (HTML prototypes, assets, components)
+### Recipe detail
+
+- Ingredients list with tap-to-check interaction
+- Step-by-step instructions
+- Source badge (Instagram / URL / Photo)
+- Processing status banner while the pipeline runs
+- Delete recipe
+
+### Recipes tab
+
+- Full recipe list with search and filter by source type (Instagram, URL, Image)
+- "In progress" and "This month" sections
+- Pull-to-refresh and infinite scroll
+
+### Home tab
+
+- Personalised greeting and recipe stats
+- Recent saves
+- Quick search shortcut
+
+---
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Mobile app | Expo (React Native) + Expo Router, iOS-first |
+| Backend / API | Next.js (App Router) deployed on Vercel |
+| Auth | Clerk — session management for Expo and Next.js |
+| Database | Neon (serverless Postgres) |
+| ORM | Prisma |
+| Background jobs | Inngest — durable async pipeline with retries |
+| LLM | Anthropic Claude (`claude-sonnet-4-5`) via Vercel AI SDK `generateObject` |
+| Scraping | Playwright + Express, deployed as a container on Railway |
+| File storage | Cloudflare R2 (S3-compatible, no egress fees) |
+| Monorepo | pnpm workspaces + Turborepo |
+
+---
+
+## Monorepo structure
+
+```
+/
+├── apps/
+│   ├── mobile/       # Expo app (iOS)
+│   ├── web/          # Next.js API + Inngest functions
+│   └── scraper/      # Playwright scraper service (Express)
+├── packages/
+│   ├── db/           # Prisma schema + generated client
+│   ├── types/        # Shared TypeScript types
+│   └── validators/   # Shared Zod schemas
+└── docs/             # Project documentation
+```
+
+---
+
+## Docs
+
+- [Local development guide](local-dev.md) — how to run all services locally
+- [Implementation plan](recipe-app-plan.md) — architecture decisions and implementation order
+- [Development build guide](development_build.md) — how to create an Expo dev build for the simulator or device
