@@ -12,9 +12,6 @@ out
 # Turbo
 .turbo
 
-# Prisma
-packages/db/generated
-
 # Expo
 apps/mobile/.expo
 apps/mobile/ios
