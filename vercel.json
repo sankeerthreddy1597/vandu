@@ -1,0 +1,5 @@
+{
+  "buildCommand": "pnpm --filter @vandu/db db:generate && pnpm --filter @vandu/web build",
+  "outputDirectory": "apps/web/.next",
+  "installCommand": "pnpm install"
+}
