@@ -24,9 +24,10 @@ export const processRecipe = inngest.createFunction(
       imageKey?: string
     }
 
-    await updateRecipeStatus(recipeId, "SCRAPING")
+    if (!recipeId) throw new Error("recipeId is missing from event data")
 
     const rawContent = await step.run("scrape-or-extract", async () => {
+      await updateRecipeStatus(recipeId, "SCRAPING")
       if (type === "INSTAGRAM" || type === "URL") {
         return await scrapeUrl(url!)
       }
@@ -37,7 +38,7 @@ export const processRecipe = inngest.createFunction(
       throw new Error(`Unknown source type: ${type}`)
     })
 
-    await updateRecipeStatus(recipeId, "EXTRACTING")
+    await step.run("mark-extracting", () => updateRecipeStatus(recipeId, "EXTRACTING"))
 
     const structured = await step.run("llm-extract", async () => {
       if (type === "IMAGE" && imageKey) {
@@ -75,6 +76,6 @@ export const processRecipe = inngest.createFunction(
       })
     })
 
-    await updateRecipeStatus(recipeId, "DONE")
+    await step.run("mark-done", () => updateRecipeStatus(recipeId, "DONE"))
   }
 )
