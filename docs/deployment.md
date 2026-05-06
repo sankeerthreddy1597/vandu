@@ -45,7 +45,7 @@ Set these in the Railway service settings:
 | Variable | Value |
 |---|---|
 | `SCRAPER_API_KEY` | A strong random secret (e.g. `openssl rand -hex 32`) |
-| `PORT` | `3001` |
+| `PORT` | `8080` |
 
 ### After deploy
 
