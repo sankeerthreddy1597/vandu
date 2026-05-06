@@ -11,7 +11,6 @@ app.use(express.json())
 app.use((req, res, next) => {
   if (req.path === "/health") return next()
   const key = req.headers["x-api-key"]
-  console.log(`[scraper] incoming request to ${req.path} with API key: ${key} and current env API key: ${API_KEY} `);
   if (!API_KEY || key !== API_KEY) {
     res.status(401).json({ error: "Unauthorized" })
     return
