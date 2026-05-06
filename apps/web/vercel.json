@@ -1,0 +1,5 @@
+{
+  "installCommand": "cd ../.. && pnpm install",
+  "buildCommand": "cd ../.. && pnpm --filter @vandu/db db:generate && pnpm --filter @vandu/web build",
+  "outputDirectory": ".next"
+}
