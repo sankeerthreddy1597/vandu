@@ -124,7 +124,7 @@ importers:
         specifier: ^4.21.0
         version: 4.22.1
       playwright:
-        specifier: ^1.52.0
+        specifier: 1.59.1
         version: 1.59.1
     devDependencies:
       '@types/express':
@@ -10515,11 +10515,11 @@ snapshots:
 
   '@types/ws@7.4.7':
     dependencies:
-      '@types/node': 22.19.17
+      '@types/node': 25.6.0
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 22.19.17
+      '@types/node': 25.6.0
 
   '@types/yargs-parser@21.0.3': {}
 
