@@ -46,6 +46,8 @@ export function useApi() {
 
   async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const token = await getToken()
+
+    console.log(API_URL,path);
     const res = await fetch(`${API_URL}${path}`, {
       ...options,
       headers: {
