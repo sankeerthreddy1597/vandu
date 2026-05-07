@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react"
+import { useMemo, useCallback } from "react"
 import {
   View,
   Text,
@@ -6,9 +6,10 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { useRouter } from "expo-router"
+import { useRouter, useFocusEffect } from "expo-router"
 import { useUser } from "@clerk/expo"
 import { colors } from "@/constants/theme"
 import { useRecipes } from "@/hooks/useRecipes"
@@ -24,9 +25,9 @@ function getGreeting() {
 export default function HomeScreen() {
   const router = useRouter()
   const { user } = useUser()
-  const { recipes, loading, load } = useRecipes()
+  const { recipes, loading, refreshing, load, refresh } = useRecipes()
 
-  useEffect(() => { load() }, [load])
+  useFocusEffect(useCallback(() => { load() }, [load]))
 
   const firstName = user?.firstName ?? "Chef"
   const recent = recipes.slice(0, 4)
@@ -41,7 +42,10 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.terracotta} />}
+      >
         {/* Dark header */}
         <View style={styles.header}>
           <Text style={styles.greeting}>{getGreeting()}, {firstName} ✦</Text>

@@ -3,6 +3,7 @@ import * as SecureStore from "expo-secure-store"
 import { Stack, useRouter, useSegments } from "expo-router"
 import { useEffect } from "react"
 import { useFonts } from "expo-font"
+import { ShareIntentProvider } from "expo-share-intent"
 import {
   PlayfairDisplay_400Regular,
   PlayfairDisplay_600SemiBold,
@@ -73,11 +74,13 @@ export default function RootLayout() {
   }
 
   return (
-    <ClerkProvider
-      publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!}
-      tokenCache={tokenCache}
-    >
-      <InitialLayout />
-    </ClerkProvider>
+    <ShareIntentProvider>
+      <ClerkProvider
+        publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!}
+        tokenCache={tokenCache}
+      >
+        <InitialLayout />
+      </ClerkProvider>
+    </ShareIntentProvider>
   )
 }

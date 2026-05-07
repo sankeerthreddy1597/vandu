@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { useRouter } from "expo-router"
 import * as ImagePicker from "expo-image-picker"
 import { LinearGradient } from "expo-linear-gradient"
+import { useShareIntentContext } from "expo-share-intent"
 import { colors } from "@/constants/theme"
 import { useApi } from "@/lib/api"
 import { uploadToR2 } from "@/lib/upload"
@@ -24,15 +25,17 @@ export default function AddScreen() {
   const [url, setUrl] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [processingId, setProcessingId] = useState<string | null>(null)
+  const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntentContext()
 
-  async function handleUrl() {
-    if (!url.trim()) return Alert.alert("Enter a URL first")
+  async function submitUrl(target: string) {
+    const trimmed = target.trim()
+    if (!trimmed) return Alert.alert("Enter a URL first")
     setSubmitting(true)
     try {
-      const isInstagram = url.includes("instagram.com")
+      const isInstagram = trimmed.includes("instagram.com")
       const { recipeId } = await api.createRecipe({
         type: isInstagram ? "instagram" : "url",
-        url: url.trim(),
+        url: trimmed,
       })
       setUrl("")
       setProcessingId(recipeId)
@@ -42,6 +45,14 @@ export default function AddScreen() {
       setSubmitting(false)
     }
   }
+
+  // Auto-submit URLs arriving from the iOS Share Extension
+  useEffect(() => {
+    if (hasShareIntent && shareIntent?.webUrl) {
+      resetShareIntent()
+      submitUrl(shareIntent.webUrl)
+    }
+  }, [hasShareIntent, shareIntent])
 
   async function handleImage() {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
@@ -111,7 +122,7 @@ export default function AddScreen() {
             </View>
             <TouchableOpacity
               style={[styles.generateBtn, submitting && { opacity: 0.6 }]}
-              onPress={handleUrl}
+              onPress={() => submitUrl(url)}
               disabled={submitting}
             >
               {submitting ? (
