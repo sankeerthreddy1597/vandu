@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#2C1A0E"
+      "backgroundColor": "#0D1A2A"
     },
     "ios": {
       "supportsTablet": false,
@@ -23,7 +23,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#2C1A0E"
+        "backgroundColor": "#0D1A2A"
       },
       "package": "com.vandu.app",
       "edgeToEdgeEnabled": true
